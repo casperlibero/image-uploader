@@ -2,7 +2,7 @@
 <html lang="pt-Br">
 <head>
     <meta charset="utf-8">
-    <title>Protótipo upload de imagens - Gazeta Press</title>
+    <title>Upload de imagens em HTML5 - Protótipo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Le styles -->
@@ -117,8 +117,8 @@
 
         <div class="row-fluid">
             <div class="span12">
-                <h2 class="muted text-center">Gazeta Press</h2>
-                <h3 class="muted text-center">Protótipo upload de imagens</h3>
+                <h2 class="muted text-center">Protótipo</h2>
+                <h3 class="muted text-center">Upload de imagens</h3>
             </div>
         </div><!-- /.row-fluid -->
 
@@ -207,16 +207,16 @@
         <hr>
 
         <div class="footer">
-            <p>&copy; Gazeta Press 2013</p>
+            <p>Protótipo - Upload em HTML5</p>
         </div>
 
     </div> <!-- /.container -->
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <script src="resumable.js"></script>
+    <script src="assets/js/resumable.js"></script>
     <script>
     var r = new Resumable({
-        target: 'upload.php',
+        target: '../src/upload.php',
         chunkSize: 1*1024*1024,
         simultaneousUploads: 4,
         testChunks: false,
@@ -355,14 +355,6 @@
       return fileReader.readAsDataURL(file);
     };
 
-    /*
-    function bytesToSize(bytes) {
-        var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        if (bytes == 0) return 'desconhecido';
-        var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-        return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
-    };
-    */
     function bytesToSize(bytes) {
         var sizes = ['desconhecido', 'bytes', 'KB', 'MB', 'GB'];
         var i = +Math.floor(Math.log(bytes) / Math.log(1024));

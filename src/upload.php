@@ -21,9 +21,13 @@
 // THE FUNCTIONS
 ////////////////////////////////////////////////////////////////////
 
+define('UPLOAD_DIR', dirname(__DIR__) . '/uploads');
+define('TMP_DIR', UPLOAD_DIR . '/tmp');
+define('LOG_FILE', TMP_DIR . '/upload_log.txt');
+
 /**
  *
- * Logging operation - to a file (upload_log.txt) and to the stdout
+ * Logging operation - to a file and to the stdout
  * @param string $str - the logging string
  */
 function _log($str) {
@@ -33,7 +37,7 @@ function _log($str) {
     echo $log_str;
 
     // log to file
-    if (($fp = fopen('upload_log.txt', 'a+')) !== false) {
+    if (($fp = fopen(LOG_FILE, 'a+')) !== false) {
         fputs($fp, $log_str);
         fclose($fp);
     }
@@ -85,7 +89,7 @@ function createFileFromChunks($temp_dir, $fileName, $chunkSize, $totalSize) {
     if ($total_files * $chunkSize >=  ($totalSize - $chunkSize + 1)) {
 
         // create the final destination file 
-        if (($fp = fopen('temp/'.$fileName, 'w')) !== false) {
+        if (($fp = fopen(UPLOAD_DIR .'/'. $fileName, 'w')) !== false) {
             for ($i=1; $i<=$total_files; $i++) {
                 fwrite($fp, file_get_contents($temp_dir.'/'.$fileName.'.part'.$i));
                 _log('writing chunk '.$i);
@@ -124,7 +128,7 @@ if (!empty($_FILES)) foreach ($_FILES as $file) {
 
     // init the destination file (format <filename.ext>.part<#chunk>
     // the file is stored in a temporary directory
-    $temp_dir = 'temp/'.$_POST['resumableIdentifier'];
+    $temp_dir = TMP_DIR.'/'.$_POST['resumableIdentifier'];
     $dest_file = $temp_dir.'/'.$_POST['resumableFilename'].'.part'.$_POST['resumableChunkNumber'];
 
     // create the temporary directory

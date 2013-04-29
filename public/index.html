@@ -150,26 +150,6 @@
                     <div class="progress progress-info progress-striped active">
                         <div class="bar"></div>
                     </div>
-                    <!--
-                    <table>
-                        <tr>
-                            <td width="100%">
-                                <div class="progress progress-info progress-striped active">
-                                    <div class="bar"></div>
-                                </div>
-                            </td>
-                            <td class="progress-text" nowrap="nowrap"></td>
-                            <td class="progress-pause" nowrap="nowrap">
-                                <a href="#" onclick="r.upload(); return(false);" class="progress-resume-link">
-                                    <img src="assets/img/resume.png" title="Resume upload" />
-                                </a>
-                                <a href="#" onclick="r.pause(); return(false);" class="progress-pause-link">
-                                    <img src="assets/img/pause.png" title="Pause upload" />
-                                </a>
-                            </td>
-                        </tr>
-                    </table>
-                    -->
                 </div>
             </div>
             
@@ -249,10 +229,7 @@
             var new_file = '<tr class="resumable-file-'+file.uniqueIdentifier+'"><td class="resumable-file-name"></td><td class="resumable-file-size"></td><td class="resumable-file-progress"></td></tr>';
 
             $('.resumable-table > tbody').append(new_file);
-
             $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-name').html(file.fileName);
-
-            //var file_size_mb = file.size / 1024 / 1024;
             $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-size').html(bytesToSize(file.size));
             // Actually start the upload
             r.upload();
@@ -276,28 +253,23 @@
             $('.progress > .bar').text('Upload completo');
         });
 
-        r.on('fileSuccess', function(file, message){
+        r.on('fileSuccess', function(file, message) {
             // Reflect that the file upload has completed
-            //$('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('(completed)');
             $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('<span class="label label-success">Completo</span>');
 
-            var thumbnail = createThumbnail(file.file, function(data){
-                //console.log(data);
-                $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-name').append(' <img alt="teste" src="' + data + '">');
+            createThumbnail(file.file, function(data) {
+                $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-name').prepend('<img alt="'+file.fileName+'" title="'+file.fileName+'" src="' + data + '"> ');
             });
         });
 
         r.on('fileError', function(file, message){
             // Reflect that the file upload has resulted in error
-            
-            //$('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('(file could not be uploaded: '+message+')');
             $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('<span class="label label-important">'+message+'</span>');
         });
 
         r.on('fileProgress', function(file){
             // Handle progress for both the file and the overall upload
             $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html(Math.floor(file.progress()*100) + '%');
-            //$('.progress-bar').css({width:Math.floor(r.progress()*100) + '%'});
             var upload_progress = Math.floor(r.progress()*100) + '%';
             $('.progress > .bar').css({width:upload_progress}).text(upload_progress);
         });

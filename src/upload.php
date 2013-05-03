@@ -21,6 +21,8 @@
 // THE FUNCTIONS
 ////////////////////////////////////////////////////////////////////
 
+date_default_timezone_set('America/Sao_Paulo');
+
 define('UPLOAD_DIR', dirname(__DIR__) . '/uploads');
 define('TMP_DIR', UPLOAD_DIR . '/tmp');
 define('LOG_FILE', TMP_DIR . '/upload_log.txt');
@@ -33,14 +35,21 @@ define('LOG_FILE', TMP_DIR . '/upload_log.txt');
 function _log($str) {
 
     // log to the output
-    $log_str = date('d-m-Y H:i:s').": {$str}\r\n";
-    echo $log_str;
+    $log_str = "{$str}\r\n";
 
-    // log to file
-    if (($fp = fopen(LOG_FILE, 'a+')) !== false) {
-        fputs($fp, $log_str);
-        fclose($fp);
+    if (is_writable(LOG_FILE)) {
+        // log to file
+        if (($fp = fopen(LOG_FILE, 'a+')) !== false) {
+            fputs($fp, $log_str);
+            fclose($fp);
+        }
     }
+}
+
+function _error($input)
+{
+    header('HTTP/1.1 500 Internal Server Error');
+    die("{$input}\r\n");
 }
 
 /**
@@ -96,7 +105,8 @@ function createFileFromChunks($temp_dir, $fileName, $chunkSize, $totalSize) {
             }
             fclose($fp);
         } else {
-            _log('cannot create the destination file');
+            //_log('cannot create the destination file');
+            _error('Erro. Não pôde criar o arquivo de destino.');
             return false;
         }
 
@@ -115,15 +125,18 @@ function createFileFromChunks($temp_dir, $fileName, $chunkSize, $totalSize) {
 ////////////////////////////////////////////////////////////////////
 // THE SCRIPT
 ////////////////////////////////////////////////////////////////////
-
+if (!is_writable(UPLOAD_DIR)) {
+    _error('Erro. Sem permissão para realizar upload');
+}
 
 // loop through files and move the chunks to a temporarily created directory
 if (!empty($_FILES)) foreach ($_FILES as $file) {
 
     // check the error status
     if ($file['error'] != 0) {
-        _log('error '.$file['error'].' in file '.$_POST['resumableFilename']);
-        continue;
+        //_log('error '.$file['error'].' in file '.$_POST['resumableFilename']);
+        _error('Erro '.$file['error'].' no arquivo '.$_POST['resumableFilename']);
+        //continue;
     }
 
     // init the destination file (format <filename.ext>.part<#chunk>
@@ -131,18 +144,20 @@ if (!empty($_FILES)) foreach ($_FILES as $file) {
     $temp_dir = TMP_DIR.'/'.$_POST['resumableIdentifier'];
     $dest_file = $temp_dir.'/'.$_POST['resumableFilename'].'.part'.$_POST['resumableChunkNumber'];
 
-    // create the temporary directory
     if (!is_dir($temp_dir)) {
         mkdir($temp_dir, 0777, true);
     }
 
+    if (!is_writable(TMP_DIR)) {
+        _error('Erro. Sem permissão para realizar upload');
+    }
+
     // move the temporary file
     if (!move_uploaded_file($file['tmp_name'], $dest_file)) {
-        _log('Error saving (move_uploaded_file) chunk '.$_POST['resumableChunkNumber'].' for file '.$_POST['resumableFilename']);
+        //_log('Error saving (move_uploaded_file) chunk '.$_POST['resumableChunkNumber'].' for file '.$_POST['resumableFilename']);
+        _error('Erro. Salvando parte '.$_POST['resumableChunkNumber'].' do arquivo '.$_POST['resumableFilename']);
     } else {
-
         // check if all the parts present, and create the final destination file
-        createFileFromChunks($temp_dir, $_POST['resumableFilename'], 
-                $_POST['resumableChunkSize'], $_POST['resumableTotalSize']);
+        createFileFromChunks($temp_dir, $_POST['resumableFilename'], $_POST['resumableChunkSize'], $_POST['resumableTotalSize']);
     }
 }

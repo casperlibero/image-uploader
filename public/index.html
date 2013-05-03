@@ -22,16 +22,6 @@
         margin: 30px 0;
     }
 
-    /* Main marketing message and sign up button */
-    .jumbotron {
-        margin: 80px 0;
-        text-align: center;
-    }
-    .jumbotron h1 {
-        font-size: 100px;
-        line-height: 1;
-    }
-
     /* Uploader: Drag & Drop */
     .resumable-error {
         display: none;
@@ -52,27 +42,25 @@
     }
 
     /* Uploader: Progress bar */
-    .resumable-progress {margin:30px 0 30px 0; width:100%; display:none;}
-    /*.progress-container {height:7px; background:#9CBD94; position:relative; }*/
-    /*.progress-bar {position:absolute; top:0; left:0; bottom:0; background:#45913A; width:0;}*/
-    .progress-text {font-size:11px; line-height:9px; padding-left:10px;}
-    /*.progress-pause {padding:0 0 0 7px;}*/
-    .progress-resume-link {display:none;}
-    .is-paused .progress-resume-link {display:inline;}
-    .is-paused .progress-pause-link {display:none;}
-    .is-complete .progress-pause {display:none;}
+    .progress-text {
+        font-size: 11px;
+        line-height: 9px;
+        padding-left: 10px;
+    }
+    .resume-pause, .progress-resume-link, .progress-pause-link {
+        display: none;
+    }
+
+    .resumable-progress {
+        margin-top: 15px;
+        display: none;
+    }
 
     /* Uploader: List of items being uploaded */
-    .resumable-table {display:none;}
-    /*
-    .resumable-list {overflow:auto; margin-right:-20px; display:none;}
-    .uploader-item {width:148px; height:90px; background-color:#666; position:relative; border:2px solid black; float:left; margin:0 6px 6px 0;}
-    .uploader-item-thumbnail {width:100%; height:100%; position:absolute; top:0; left:0;}
-    .uploader-item img.uploader-item-thumbnail {opacity:0;}
-    .uploader-item-creating-thumbnail {padding:0 5px; font-size:9px; color:white;}
-    .uploader-item-title {position:absolute; font-size:9px; line-height:11px; padding:3px 50px 3px 5px; bottom:0; left:0; right:0; color:white; background-color:rgba(0,0,0,0.6); min-height:27px;}
-    .uploader-item-status {position:absolute; bottom:3px; right:3px;}
-    */
+    .resumable-table {
+        display: none;
+        margin-top: 15px;
+    }
 
     /* sprites - browser support */
     .browsers a {
@@ -147,14 +135,6 @@
         <div class="resumable-progress">
             <div class="row-fluid">
                 <div class="span12">
-                    <div class="progress progress-info progress-striped active">
-                        <div class="bar"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row-fluid">
-                <div class="span12">
                     <a href="#" onclick="r.upload(); return(false);" class="progress-resume-link">
                         <img src="assets/img/resume3.png" title="Continuar upload" />
                     </a>
@@ -163,13 +143,10 @@
                     </a>
                 </div>
             </div>
-
         </div>
 
         <div class="row-fluid">
             <div class="span12">
-                <!--<ul class="resumable-list"></ul>-->
-
                 <table class="table table-striped table-bordered resumable-table">
                 <thead>
                     <tr>
@@ -195,138 +172,141 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script src="assets/js/resumable.js"></script>
     <script>
+    // instância da biblioteca Resumable
     var r = new Resumable({
-        target: '../src/upload.php',
-        chunkSize: 1*1024*1024,
-        simultaneousUploads: 4,
-        testChunks: false,
-        throttleProgressCallbacks: 1
+        target: '../src/upload.php', // destino server-side que irá receber os arquivos
+        chunkSize: 1024 * 1024, // O tamanho de cada parte do arquivo
+        simultaneousUploads: 4, // quantidade de uploads simultâneos
+        testChunks: false, // usa o método POST, não sendo possível resumir o upload em cada de crash no browser eu restart do computador
+        fileType: ['jpeg'], // tipos de arquivos permitidos para upload
+        maxChunkRetries: 30, // quantidade de vezes que tenta reupar por algum problema de conexão
+        chunkRetryInterval: 60000 * 2 // intervalo de tempo entre cada tentativa de reupload (em milisegundos. 1000 milisegundos = 1 segundo)
     });
 
-    // Resumable.js isn't supported, fall back on a different method
+    // fall back (sem suporte HTML5 File API)
     if (!r.support) {
         $('.resumable-error').show();
     } else {
-        // Show a place for dropping/selecting files
         $('.resumable-drop').show();
         r.assignDrop($('.resumable-drop')[0]);
         r.assignBrowse($('.resumable-browse')[0]);
 
-        // Handle file add event
-        r.on('fileAdded', function(file){
-            $('.progress').removeClass('progress-success').addClass('progress-info progress-striped active');
-            $('.progress > .bar').empty();
-
-            // Show progress pabr
-            //$('.resumable-progress, .resumable-list').show();
-            $('.resumable-progress, .resumable-table').show();
-            // Show pause, hide resume
-            $('.resumable-progress .progress-resume-link').hide();
-            $('.resumable-progress .progress-pause-link').show();
-            // Add the file to the list
+        // Evento para cada arquivo adicionado
+        r.on('fileAdded', function(file) {
+            // Adiciona info do arquivo na tabela html
             $('.resumable-list').append('<li class="resumable-file-'+file.uniqueIdentifier+'">Uploading <span class="resumable-file-name"></span> <span class="resumable-file-progress"></span>');
 
             var new_file = '<tr class="resumable-file-'+file.uniqueIdentifier+'"><td class="resumable-file-name"></td><td class="resumable-file-size"></td><td class="resumable-file-progress"></td></tr>';
 
             $('.resumable-table > tbody').append(new_file);
+            createThumbnail(file.file, function(data) {
+                if (data) {
+                    $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-name').prepend('<img alt="'+file.fileName+'" title="'+file.fileName+'" src="' + data + '"> ');
+                }
+            });
             $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-name').html(file.fileName);
             $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-size').html(bytesToSize(file.size));
-            // Actually start the upload
+            // Inicia o upload
             r.upload();
         });
 
+        // Evento quando o upload é pausado
         r.on('pause', function(){
-            // Show resume, hide pause
             $('.resumable-progress .progress-resume-link').show();
             $('.resumable-progress .progress-pause-link').hide();
         });
 
-        r.on('upload', function(){
+        // Evento do upload em progresso
+        r.on('progress', function(){
+            $('.resumable-table, .resumable-progress').show();
+
             $('.resumable-progress .progress-resume-link').hide();
             $('.resumable-progress .progress-pause-link').show();
         });
 
-        r.on('complete', function(){
-            // Hide pause/resume when the upload has completed
-            $('.resumable-progress .progress-resume-link, .resumable-progress .progress-pause-link').hide();
-            $('.progress').removeClass('progress-info progress-striped active').addClass('progress-success');
-            $('.progress > .bar').text('Upload completo');
+        // Evento de cada arquivo em progresso
+        r.on('fileProgress', function(file) {
+            var upload_progress = Math.floor(r.progress()*100);
+            $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('<span class="badge badge-warning">'+upload_progress+'%</span>');
         });
 
-        r.on('fileSuccess', function(file, message) {
-            // Reflect that the file upload has completed
-            $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('<span class="label label-success">Completo</span>');
-
-            createThumbnail(file.file, function(data) {
-                $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-name').prepend('<img alt="'+file.fileName+'" title="'+file.fileName+'" src="' + data + '"> ');
-            });
-        });
-
-        r.on('fileError', function(file, message){
-            // Reflect that the file upload has resulted in error
+        // Evento para qualquer erro com o upload
+        r.on('error', function(message, file) {
             $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('<span class="label label-important">'+message+'</span>');
+
+            $('.resumable-progress .progress-resume-link').hide();
+            $('.resumable-progress .progress-pause-link').hide();
         });
 
-        r.on('fileProgress', function(file){
-            // Handle progress for both the file and the overall upload
-            $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html(Math.floor(file.progress()*100) + '%');
-            var upload_progress = Math.floor(r.progress()*100) + '%';
-            $('.progress > .bar').css({width:upload_progress}).text(upload_progress);
+        // Evento para o upload do arquivo com sucesso
+        r.on('fileSuccess', function(file, message) {
+            $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('<span class="badge badge-success">100%</span>');
+        });
+
+        // Evento para quando termina o upload, com sucesso ou não
+        r.on('complete', function() {
+            $('.resumable-progress .progress-resume-link, .resumable-progress .progress-pause-link').hide();
         });
     }
 
+    // função que cria thumbnail para os arquivos
     function createThumbnail(file, callback) {
+        // somente cria o thumbnail para arquivos de imagem
+        if (file.type.split('/')[0] != 'image') return false;
 
-      var fileReader;
+        var fileReader;
 
-      fileReader = new FileReader;
-      fileReader.onload = function() {
-        var img;
+        fileReader = new FileReader;
+        fileReader.onload = function() {
+            var img;
 
-        img = new Image;
-        img.onload = function() {
-          var canvas, ctx, srcHeight, srcRatio, srcWidth, srcX, srcY, thumbnail, trgHeight, trgRatio, trgWidth, trgX, trgY;
+            img = new Image;
+            img.onload = function() {
+                var canvas, ctx, srcHeight, srcRatio, srcWidth, srcX, srcY, thumbnail, trgHeight, trgRatio, trgWidth, trgX, trgY;
 
-          canvas = document.createElement("canvas");
-          ctx = canvas.getContext("2d");
-          srcX = 0;
-          srcY = 0;
-          srcWidth = img.width;
-          srcHeight = img.height;
-          canvas.width = 100;
-          canvas.height = 100;
-          trgX = 0;
-          trgY = 0;
-          trgWidth = canvas.width;
-          trgHeight = canvas.height;
-          srcRatio = img.width / img.height;
-          trgRatio = canvas.width / canvas.height;
-          if (img.height < canvas.height || img.width < canvas.width) {
-            trgHeight = srcHeight;
-            trgWidth = srcWidth;
-          } else {
-            if (srcRatio > trgRatio) {
-              srcHeight = img.height;
-              srcWidth = srcHeight * trgRatio;
-            } else {
-              srcWidth = img.width;
-              srcHeight = srcWidth / trgRatio;
-            }
-          }
-          srcX = (img.width - srcWidth) / 2;
-          srcY = (img.height - srcHeight) / 2;
-          trgY = (canvas.height - trgHeight) / 2;
-          trgX = (canvas.width - trgWidth) / 2;
-          ctx.drawImage(img, srcX, srcY, srcWidth, srcHeight, trgX, trgY, trgWidth, trgHeight);
-          thumbnail = canvas.toDataURL("image/png");
+                canvas = document.createElement("canvas");
+                ctx = canvas.getContext("2d");
+                srcX = 0;
+                srcY = 0;
+                srcWidth = img.width;
+                srcHeight = img.height;
+                canvas.width = 100;
+                canvas.height = 100;
+                trgX = 0;
+                trgY = 0;
+                trgWidth = canvas.width;
+                trgHeight = canvas.height;
+                srcRatio = img.width / img.height;
+                trgRatio = canvas.width / canvas.height;
+                if (img.height < canvas.height || img.width < canvas.width) {
+                    trgHeight = srcHeight;
+                    trgWidth = srcWidth;
+                } else {
+                    if (srcRatio > trgRatio) {
+                        srcHeight = img.height;
+                        srcWidth = srcHeight * trgRatio;
+                    } else {
+                        srcWidth = img.width;
+                        srcHeight = srcWidth / trgRatio;
+                    }
+                }
+                srcX = (img.width - srcWidth) / 2;
+                srcY = (img.height - srcHeight) / 2;
+                trgY = (canvas.height - trgHeight) / 2;
+                trgX = (canvas.width - trgWidth) / 2;
+                ctx.drawImage(img, srcX, srcY, srcWidth, srcHeight, trgX, trgY, trgWidth, trgHeight);
+                thumbnail = canvas.toDataURL("image/png");
 
-            return callback(thumbnail);
+                return callback(thumbnail);
+            };
+
+            return img.src = fileReader.result;
         };
-        return img.src = fileReader.result;
-      };
-      return fileReader.readAsDataURL(file);
+
+        return fileReader.readAsDataURL(file);
     };
 
+    // função que retorna o tamanho dos arquivos para uma leitura humana
     function bytesToSize(bytes) {
         var sizes = ['desconhecido', 'bytes', 'KB', 'MB', 'GB'];
         var i = +Math.floor(Math.log(bytes) / Math.log(1024));

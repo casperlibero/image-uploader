@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-Br">
+<head>
+    <meta charset="utf-8">
+    <title>Upload de imagens em HTML5 - Protótipo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Le styles -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+    body {
+        padding-top: 20px;
+        padding-bottom: 60px;
+    }
+
+    /* Custom container */
+    .container {
+        margin: 0 auto;
+        max-width: 1000px;
+    }
+    .container > hr {
+        margin: 30px 0;
+    }
+
+    /* Uploader: Drag & Drop */
+    .resumable-error {
+        display: none;
+    }
+
+    .resumable-drop {
+        padding: 15px;
+        font-size: 13px;
+        text-align: center;
+        color: #666;
+        background-color: #eee;
+        border: 2px dashed #aaa;
+        border-radius: 10px;
+        /* margin-top: 40px; */
+        z-index: 9999;
+        display: none;
+    }
+
+    /* Uploader: Progress bar */
+    .progress-text {
+        font-size: 11px;
+        line-height: 9px;
+        padding-left: 10px;
+    }
+    .resume-pause, .progress-resume-link, .progress-pause-link {
+        display: none;
+    }
+
+    .resumable-progress {
+        margin-top: 15px;
+        display: none;
+    }
+
+    /* Uploader: List of items being uploaded */
+    .resumable-table {
+        display: none;
+        margin-top: 15px;
+    }
+
+    .resumable-grid {
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .thumbnail {
+        min-height: 200px;
+    }
+
+    .thumbnail a.ok {
+        width: 32px;
+        height: 32px;
+        /* background: url("assets/img/icon-ok.png") no-repeat scroll 0 10px transparent; */
+        background: url("assets/img/Alarm-Tick-icon.png") no-repeat scroll 0 10px transparent;
+        margin: -24px 0 0 82px;
+        padding: 0 0 10px;
+        position: absolute;
+    }
+
+    .thumbnail a.error {
+        width: 32px;
+        height: 32px;
+        /* background: url("assets/img/icon-error.png") no-repeat scroll 0 10px transparent; */
+        background: url("assets/img/Alarm-Warning-icon.png") no-repeat scroll 0 10px transparent;
+        margin: -24px 0 0 82px;
+        padding: 0 0 10px;
+        position: absolute;
+    }
+
+    .thumbnail h4 {
+        color: #FF0000;
+        margin: 2px 0;
+        text-transform: uppercase;
+    }
+
+    .thumbnail .badge {
+        font-size: 16px;
+        margin-top: 10px;
+    }
+
+    .thumbnail .progress {
+        margin: 17px 0 0 0;
+    }
+
+    .thumbnail .progress .bar {
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .thumbnail button {
+        font-size: 14px;
+    }
+
+    p.aviso-qa {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    /* Customize the navbar links to be fill the entire space of the .navbar */
+    .masthead {
+        margin-bottom: 25px;
+    }
+
+    .masthead .row-fluid {
+        margin-bottom: 10px;
+    }
+
+    .navbar .navbar-inner {
+        padding: 0;
+    }
+    .navbar .nav {
+        margin: 0;
+        display: table;
+        width: 100%;
+    }
+    .navbar .nav li {
+        display: table-cell;
+        width: 1%;
+        float: none;
+    }
+    .navbar .nav li a {
+        font-weight: bold;
+        text-align: center;
+        border-left: 1px solid rgba(255,255,255,.75);
+        border-right: 1px solid rgba(0,0,0,.1);
+    }
+    .navbar .nav li:first-child a {
+        border-left: 0;
+        border-radius: 3px 0 0 3px;
+    }
+    .navbar .nav li:last-child a {
+        border-right: 0;
+        border-radius: 0 3px 3px 0;
+    }
+
+    /*****/
+    .upload {
+        display: none;
+    }
+
+    </style>
+    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="assets/js/html5shiv.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="masthead">
+            <div class="row-fluid">
+                <div class="span1">
+                    <img src="assets/img/logotipo-55x56.png" style="margin-left: 0;"/>
+                </div>
+                <div class="span5">
+                    <h3 class="muted" style="margin: 20px 0 0 0;">Upload de Fotos</h3>
+                </div>
+                <div id="usuario-logado" class="span6">
+                    <p class="navbar-text pull-right" style="margin: 20px 0 0 0;">
+                        <i class="icon-user"></i> Crédito para: <strong>Agência Agif</strong> | <a class="navbar-link" href="login.html">Sair</a>
+                    </p>
+                </div>
+            </div><!-- /.row-fluid-->
+
+            <div class="navbar">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <ul class="nav">
+                            <li><a href="/">Upload</a></li>
+                            <li style="display: none;"><a href="#">Crédito</a></li>
+                            <li><a href="http://gazetapress.com/fotos">gazetapress.com</a></li>
+                            <li><a href="http://gazetapress.com/contato">Contato</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div><!-- /.navbar -->
+        </div>
+
+        <div class="credito">
+            <div class="row-fluid">
+                <div class="span12">
+                    <h3>Crédito das fotos</h3>
+                    <p>Verificamos que o seu login é de <strong>agência</strong>, portanto precisamos saber o <strong>seu nome</strong> para os devidos <strong>créditos</strong>.</p>
+                    <form id="credito" class="form-inline">
+                        <input name="credito" type="text" class="input-large" placeholder="Seu nome">
+                        <button type="submit" class="btn">Ok</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="upload">
+            <div class="row-fluid">
+                <div class="span12">
+                    <div class="resumable-drop" ondragenter="jQuery(this).addClass('resumable-dragover');" ondragend="jQuery(this).removeClass('resumable-dragover');" ondrop="jQuery(this).removeClass('resumable-dragover');">
+                        <h3>Arraste as fotos aqui ou <a class="resumable-browse"><u>selecione de seu computador</u></a></h3>
+                        <p class="aviso-qa">Todas as fotos devem conter <strong>legenda</strong> e dimensão mínima de <strong>1000x1000</strong>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="resumable-progress">
+                <div class="row-fluid">
+                    <div class="span12">
+                        <a href="#" onclick="r.upload(); return(false);" class="progress-resume-link">
+                            <img src="assets/img/resume3.png" title="Continuar upload" />
+                        </a>
+                        <a href="#" onclick="r.pause(); return(false);" class="progress-pause-link">
+                            <img src="assets/img/pause3.png" title="Pausar upload" />
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!--
+            <div class="row-fluid">
+                <div class="span12">
+                    <table class="table table-striped table-bordered resumable-table">
+                    <thead>
+                        <tr>
+                            <th>Arquivo</th>
+                            <th>Tamanho</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+            -->
+
+            <div class="resumable-grid row-fluid">
+                <ul class="thumbnails">
+                    <li class="span3">
+                        <div class="thumbnail">
+                            <a href="#" class="ok"></a>
+                            <img alt="300x200" src="assets/img/fotos-exemplo/260x173-1.jpg">
+                            <div class="progress"><div class="bar bar-success" style="width: 100%;">Upload completo</div></div>
+                        </div>
+                    </li>
+
+                    <li class="span3">
+                        <div class="thumbnail">
+                            <img alt="300x200" src="assets/img/fotos-exemplo/260x173-2.jpg">
+                            <div class="progress"><div class="bar bar-warning" style="width: 83%;">83% Enviando</div></div>
+                        </div>
+                    </li>
+
+                    <li class="span3">
+                        <div class="thumbnail">
+                            <a href="#" class="error"></a>
+                            <img alt="300x200" src="assets/img/fotos-exemplo/260x173-3.jpg">
+                            <h4>Sem legenda</h4>
+                            <button class="btn btn-small btn-danger" type="button">Enviar mesmo assim</button>
+                        </div>
+                    </li>
+
+                    <li class="span3">
+                        <div class="thumbnail">
+                            <a href="#" class="error"></a>
+                            <img alt="300x200" src="assets/img/fotos-exemplo/260x173-4.jpg">
+                            <h4>677 x 591</h4>
+                            <button class="btn btn-small btn-danger" type="button">Enviar mesmo assim</button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+        <!--
+        <hr>
+
+        <div class="footer">
+            <p>Protótipo - Upload em HTML5</p>
+        </div>
+        -->
+
+    </div> <!-- /.container -->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="assets/js/resumable.js"></script>
+    <script>
+    // instância da biblioteca Resumable
+    var r = new Resumable({
+        target: '../src/upload.php', // destino server-side que irá receber os arquivos
+        chunkSize: 1024 * 1024, // O tamanho de cada parte do arquivo
+        simultaneousUploads: 4, // quantidade de uploads simultâneos
+        testChunks: false, // usa o método POST, não sendo possível resumir o upload em cada de crash no browser eu restart do computador
+        fileType: ['jpeg'], // tipos de arquivos permitidos para upload
+        maxChunkRetries: 30, // quantidade de vezes que tenta reupar por algum problema de conexão
+        chunkRetryInterval: 60000 * 2 // intervalo de tempo entre cada tentativa de reupload (em milisegundos. 1000 milisegundos = 1 segundo)
+    });
+
+    // fall back (sem suporte HTML5 File API)
+    if (!r.support) {
+        $('.resumable-error').show();
+    } else {
+        $('.resumable-drop').show();
+        r.assignDrop($('.resumable-drop')[0]);
+        r.assignBrowse($('.resumable-browse')[0]);
+
+        // Evento para cada arquivo adicionado
+        r.on('fileAdded', function(file) {
+            // Adiciona info do arquivo na tabela html
+            $('.resumable-list').append('<li class="resumable-file-'+file.uniqueIdentifier+'">Uploading <span class="resumable-file-name"></span> <span class="resumable-file-progress"></span>');
+
+            var new_file = '<tr class="resumable-file-'+file.uniqueIdentifier+'"><td class="resumable-file-name"></td><td class="resumable-file-size"></td><td class="resumable-file-progress"></td></tr>';
+
+            $('.resumable-table > tbody').append(new_file);
+            createThumbnail(file.file, function(data) {
+                if (data) {
+                    $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-name').prepend('<img alt="'+file.fileName+'" title="'+file.fileName+'" src="' + data + '"> ');
+                }
+            });
+            $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-name').html(file.fileName);
+            $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-size').html(bytesToSize(file.size));
+            // Inicia o upload
+            r.upload();
+        });
+
+        // Evento quando o upload é pausado
+        r.on('pause', function(){
+            $('.resumable-progress .progress-resume-link').show();
+            $('.resumable-progress .progress-pause-link').hide();
+        });
+
+        // Evento do upload em progresso
+        r.on('progress', function(){
+            $('.resumable-table, .resumable-progress').show();
+
+            $('.resumable-progress .progress-resume-link').hide();
+            $('.resumable-progress .progress-pause-link').show();
+        });
+
+        // Evento de cada arquivo em progresso
+        r.on('fileProgress', function(file) {
+            var upload_progress = Math.floor(r.progress()*100);
+            $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('<span class="badge badge-warning">'+upload_progress+'%</span>');
+        });
+
+        // Evento para qualquer erro com o upload
+        r.on('error', function(message, file) {
+            $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('<span class="label label-important">'+message+'</span>');
+
+            $('.resumable-progress .progress-resume-link').hide();
+            $('.resumable-progress .progress-pause-link').hide();
+        });
+
+        // Evento para o upload do arquivo com sucesso
+        r.on('fileSuccess', function(file, message) {
+            $('.resumable-file-'+file.uniqueIdentifier+' .resumable-file-progress').html('<span class="badge badge-success">100%</span>');
+        });
+
+        // Evento para quando termina o upload, com sucesso ou não
+        r.on('complete', function() {
+            $('.resumable-progress .progress-resume-link, .resumable-progress .progress-pause-link').hide();
+        });
+    }
+
+    // função que cria thumbnail para os arquivos
+    function createThumbnail(file, callback) {
+        // somente cria o thumbnail para arquivos de imagem
+        if (file.type.split('/')[0] != 'image') return false;
+
+        var fileReader;
+
+        fileReader = new FileReader;
+        fileReader.onload = function() {
+            var img;
+
+            img = new Image;
+            img.onload = function() {
+                var canvas, ctx, srcHeight, srcRatio, srcWidth, srcX, srcY, thumbnail, trgHeight, trgRatio, trgWidth, trgX, trgY;
+
+                canvas = document.createElement("canvas");
+                ctx = canvas.getContext("2d");
+                srcX = 0;
+                srcY = 0;
+                srcWidth = img.width;
+                srcHeight = img.height;
+                canvas.width = 100;
+                canvas.height = 100;
+                trgX = 0;
+                trgY = 0;
+                trgWidth = canvas.width;
+                trgHeight = canvas.height;
+                srcRatio = img.width / img.height;
+                trgRatio = canvas.width / canvas.height;
+                if (img.height < canvas.height || img.width < canvas.width) {
+                    trgHeight = srcHeight;
+                    trgWidth = srcWidth;
+                } else {
+                    if (srcRatio > trgRatio) {
+                        srcHeight = img.height;
+                        srcWidth = srcHeight * trgRatio;
+                    } else {
+                        srcWidth = img.width;
+                        srcHeight = srcWidth / trgRatio;
+                    }
+                }
+                srcX = (img.width - srcWidth) / 2;
+                srcY = (img.height - srcHeight) / 2;
+                trgY = (canvas.height - trgHeight) / 2;
+                trgX = (canvas.width - trgWidth) / 2;
+                ctx.drawImage(img, srcX, srcY, srcWidth, srcHeight, trgX, trgY, trgWidth, trgHeight);
+                thumbnail = canvas.toDataURL("image/png");
+
+                return callback(thumbnail);
+            };
+
+            return img.src = fileReader.result;
+        };
+
+        return fileReader.readAsDataURL(file);
+    };
+
+    // função que retorna o tamanho dos arquivos para uma leitura humana
+    function bytesToSize(bytes) {
+        var sizes = ['desconhecido', 'bytes', 'KB', 'MB', 'GB'];
+        var i = +Math.floor(Math.log(bytes) / Math.log(1024));
+        return (bytes / Math.pow(1024, i)).toFixed( i ? 1 : 0 ) + ' ' + sizes[ isNaN( bytes ) ? 0 : i+1 ];
+    }
+
+    $("form#credito").submit(function() {
+        var credito = $(this).children(":input['credito']").val();
+        $("#usuario-logado > p > strong").append('/' + credito);
+
+        $("div.credito").slideToggle('slow');
+        $("div.upload").slideToggle('slow');
+
+        $("li:eq(1)").show();
+
+        return false;
+    });
+
+    $("li:eq(1)").click(function() {
+        $("div.credito").slideToggle('slow');
+        $("div.upload").slideToggle('slow');
+    });
+    </script>
+
+</body>
+</html>
